@@ -1,32 +1,55 @@
 window.onload = function() {
-    var gridWidth = 50;
-    var gridHeight = 50;
+    var gridWidth = 80;
+    var gridHeight = 60;
 
-    var COLS = 15;
-    var ROWS = 15;
+    var COLS = 6;
+    var ROWS = 8;
 
     var engine = new Engine(gridWidth, gridHeight, COLS, ROWS);
+    var reels = [];
+    var prizes = [];
+
+    var BORDER_WIDTH = 0.05;
+    var REEL1_X = 1.7;
+    var REELS_Y = 0.45;
+    var REELS_HEIGHT = 3;
+
+    var SLOT_MACHINE_IMAGE = "images/slot-machine.png";
+    var LEVER_IMAGE = "images/lever.png";
+    // reel1 icons
+    var EXPRESSO_MACHINE_IMAGE = "images/expresso-machine.jpg";
+    var COFFEE_MAKER_IMAGE = "images/coffee-maker.jpg";
+    var TEA_POT_IMAGE = "images/tea-pot.jpg";
+    // reel2 icons 
+    var TAMPER_IMAGE = "images/tamper.jpg";
+    var COFFEE_FILTER_IMAGE = "images/coffee-filter.jpg";
+    var TEA_STRAINER_IMAGE = "images/tea-strainer.jpg";
+    // reel3 icons
+    var EXPRESSO_BEANS_IMAGE = "images/expresso-beans.png";
+    var GROUND_COFFEE_IMAGE = "images/ground-coffee.jpg";
+    var LOOSE_TEA_IMAGE = "images/loose-tea.jpg";
+    // prizes icons
+    var EXPRESSO_CUP_IMAGE = "images/expresso-cup.png";
+    var COFFEE_CUP_IMAGE = "images/coffee-cup.png";
+    var TEA_CUP_IMAGE = "images/tea-cup.png";
+
 
     function loadResources(engine) {
         Resources.load([
-            'images/expresso-beans.jpg',
-            "images/coffee-maker.jpg",
-            "images/tea-pot.jpg",
-            "images/button.jpg",
-            "images/expresso-machine.jpg",
-            "images/expresso-machineNEW.jpg",
-            "images/background.jpg",
-            "images/mug.jpg",
-            "images/vending-machine.jpg",
-            "images/new-machine.jpg",
-            "images/new-machine_3.jpg",
-            "images/level-tr.png",
-            "images/expresso-prize.jpg",
-            "images/coffee-filter.jpg",
-            "images/tea-strainer.jpg",
-            "images/expresso-tamper.jpg",
-            "images/ground-coffee.jpg",
-            "images/loose-tea.jpg"
+            SLOT_MACHINE_IMAGE,
+            LEVER_IMAGE,
+            EXPRESSO_MACHINE_IMAGE,
+            COFFEE_MAKER_IMAGE,
+            TEA_POT_IMAGE,
+            TAMPER_IMAGE,
+            COFFEE_FILTER_IMAGE,
+            TEA_STRAINER_IMAGE,
+            EXPRESSO_BEANS_IMAGE,
+            GROUND_COFFEE_IMAGE,
+            LOOSE_TEA_IMAGE,
+            EXPRESSO_CUP_IMAGE,
+            COFFEE_CUP_IMAGE,
+            TEA_CUP_IMAGE
         ]);
         engine.lastTime = Date.now();
         Resources.onReady(engine.start.bind(engine));
@@ -36,56 +59,78 @@ window.onload = function() {
     document.addEventListener("click", function(event) {
         engine.handleMouseEvent("click", event);
     });
-    // engine.addEntityToScreen(new RectangleEntity(0, 0, 10, 15));
-    engine.addEntityToScreen(new BackGroundImage(2, 3.7, "images/new-machine_3.jpg"));
 
-    // engine.addEntityToScreen(new CoffeeMachine());
-    var win = function() {
-      engine.addEntityToScreen(new BackGroundImage(9, 10,"images/expresso-prize.jpg"));
-      // engine.emptyScreen();
-      // engine.addEntityToScreen(new RectangleEntity(0, 0, 10, 15));
-      // engine.addEntityToScreen(new RectangleEntity(0, 0, 5, 8));
-      // engine.addEntityToScreen(new BackGroundImage(2, 5,"images/expresso-prize.jpg"));
-      // var playAgainButton = new Button(4, 3, 1, 1, playAgain);
-      // engine.addEntityToScreen(playAgainButton);
-      // engine.addMouseEventSubscribtion(new MouseEventSubscribtion("click", playAgainButton, playAgainButton.onMouseDown.bind(playAgainButton)));
+    var stopped = true;
 
-    }
-    var values = [];
-    var onWin = function(value) {
-      values.push(value);
-      if (values.length === 3) {
-        console.log(values);
-        if (values[0] === values[0] && values[0] === values[0]) {
-          setTimeout(win, 0);
-        }
-      }
+    // display prize
+    var prize = null;
+    var showPrize = function(ind) {
+        prize = prizes[ind];
+        prize.visible = true;
+        stopped = true;
     };
-
-    var playAgain = function() {
-      engine.emptyScreen();
-       engine.addEntityToScreen(new RectangleEntity(0, 0, 5, 8));
+    // Compare values on stopped reels
+    var values = [];
+    var onStop = function(value) {
+        values.push(value);
+        if (values.length === 3) {
+            if (values[0] === values[1] && values[0] === values[2]) {
+                setTimeout(showPrize(values[0]), 0);
+            } else {
+                stopped = true;
+            }
+        }
     };
 
     var start = function() {
-      values.length = 0;
-      reel1.spin = true;
-      reel2.spin = true;
-      reel3.spin = true;
+        if (stopped) {
+            stopped = false;
+
+            if (prize !== null) {
+                prize.visible = false;
+            }
+            values.length = 0;
+
+            var r;
+            for (var i in reels) {
+                r = reels[i];
+                r.setMaxSpeed(getRandomInt(10, 15));
+                r.setAcceleration(getRandomInt(5, 10));
+                r.spin = true;
+            }
+
+        }
     };
 
-    engine.addEntityToScreen(new TextEntity(1, 1, "Good Morning Thumbtack engineers! ", "#000", "30px Arial")); 
-    engine.addEntityToScreen(new TextEntity(1, 2, "Would you like a healthy dose of caffeine? Pull the lever!", "#000", "20px Arial"));
-    var reel1 = new Reel(4, 5, 1, 4, 10, 0.99, -4, onWin, "images/expresso-machineNEW.jpg", "images/coffee-maker.jpg", "images/tea-pot.jpg");
-    var reel2 = new Reel(5, 5, 1, 8, 15, 0.99, -8, onWin, "images/expresso-tamper.jpg", "images/coffee-filter.jpg", "images/tea-strainer.jpg");
-    var reel3 = new Reel(6, 5, 1, 6, 12, 0.99, -6, onWin, "images/expresso-beans.jpg", "images/ground-coffee.jpg", "images/loose-tea.jpg");
-    engine.addEntityToScreen(reel1);
-    engine.addEntityToScreen(reel2);
-    engine.addEntityToScreen(reel3);
-    var button = new Button(9, 8, 1, 2, start);
-    engine.addEntityToScreen(button);
-    engine.addMouseEventSubscribtion(new MouseEventSubscribtion("click", button, button.onMouseDown.bind(button)));
-    // engine.addEntityToScreen(new RectangleEntity(4, 0, 1, 1));
-    // engine.addEntityToScreen(new BackGroundImage(2, 5,"images/mug.jpg"));
+    var getRandomInt = function(min, max) {
+        return Math.floor(Math.random() * (max - min)) + min;
+    };
 
+    // Add reels to the screen
+    reels.push(new Reel(REEL1_X, REELS_Y, REELS_HEIGHT, EXPRESSO_MACHINE_IMAGE, COFFEE_MAKER_IMAGE, TEA_POT_IMAGE));
+    reels.push(new Reel(REEL1_X + 1, REELS_Y, REELS_HEIGHT, TAMPER_IMAGE, COFFEE_FILTER_IMAGE, TEA_STRAINER_IMAGE));
+    reels.push(new Reel(REEL1_X + 2, REELS_Y, REELS_HEIGHT, EXPRESSO_BEANS_IMAGE, GROUND_COFFEE_IMAGE, LOOSE_TEA_IMAGE));
+
+    for (var i in reels) {
+        reels[i].setOnStopCallback(onStop);
+        engine.addEntityToScreen(reels[i]);
+    }
+
+    // Add SlotMachine Image and reels borders to te screen
+    engine.addEntityToScreen(new SlotMachine(1.32, 0, SLOT_MACHINE_IMAGE));
+    engine.addEntityToScreen(new ReelsBorder(REEL1_X, REELS_Y, REELS_HEIGHT, BORDER_WIDTH));
+
+    // Add start button to the screen
+    var button = new Button(5, 3, 1, 2, LEVER_IMAGE, start);
+    engine.addEntityToScreen(button);
+    engine.addMouseEventSubscribtion(new MouseEventSubscribtion("click", button, button.onMouseClick.bind(button)));
+
+    // Add prizes to the screen
+    prizes.push(new Prize(2.1, 5.2, EXPRESSO_CUP_IMAGE));
+    prizes.push(new Prize(2.3, 5.5, COFFEE_CUP_IMAGE));
+    prizes.push(new Prize(2.1, 5.5, TEA_CUP_IMAGE));
+
+    for (var i in prizes) {
+        engine.addEntityToScreen(prizes[i]);
+    }
 };

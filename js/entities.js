@@ -1,4 +1,4 @@
-/* entities.js file provides all entities classes for game.
+/* entities.js file provides all entities classes for the app.
  */
 function simpleSprite(image) {
     return sprite(image, 0, 0, defaultBoundingBox());
@@ -26,164 +26,123 @@ function boundingBox(x, y, w, h) {
     };
 }
 
-var TextEntity = function(x, y, text, color, font) {
+var Entity = function(x, y) {
     this.x = x;
     this.y = y;
-    this.text = text;
-    this.color = color;
-    this.font = font;
-     this.update = function() {
-
-    };
-    this.render = function(engine) {
-        engine.drawText(this.x, this.y, this.text, this.color, this.font);
-    };
+    this.update = function() {};
 };
 
-var BackGroundImage = function(x, y, image) {
-    this.x = x;
-    this.y = y;
-    this.sprite = simpleSprite(image);
-    this.update = function() {
-
-    };
+var SpriteEntity = function(x, y, sprite) {
+    Entity.call(this, x, y);
+    this.sprite = sprite;
     this.render = function(engine) {
         engine.drawImage(this.sprite, this.x, this.y);
     };
 };
 
-var ReelIcon = function(x, y, image, value) {
-    this.x = x;
-    this.y = y;
-    this.value = value;
-    this.sprite = simpleSprite(image);
-    this.prev;
-    this.visible = true;
-    this.update = function() {
+var SlotMachine = function(x, y, image) {
+    SpriteEntity.call(this, x, y, simpleSprite(image));
+};
 
-    };
+var ReelIcon = function(x, y, image, value) {
+    SpriteEntity.call(this, x, y, simpleSprite(image));
+    this.value = value;
+    this.prev;
+};
+
+var Button = function(x, y, w, h, image, callback) {
+    SpriteEntity.call(this, x, y, simpleSprite(image));
+    this.w = w;
+    this.h = h;
+    this.onMouseClick = callback;
+};
+
+var RectangleEntity = function(x, y, width, height) {
+    Entity.call(this, x, y);
+    this.width = width;
+    this.height = height;
+    this.color = "#4d4d4d";
     this.render = function(engine) {
-        if (this.y >= 4) {
+        engine.drawRect(x, y, width, height, this.color);
+    };
+};
+
+var Prize = function(x, y, image) {
+    SpriteEntity.call(this, x, y, simpleSprite(image));
+    this.visible = false;
+    this.render = function(engine) {
+        if (this.visible) {
             engine.drawImage(this.sprite, this.x, this.y);
         }
     };
 };
 
-var Button = function(x, y, w, h, callback) {
-    this.x = x;
-    this.y = y;
-    this.w = w;
-    this.h = h;
-    this.onMouseDown = callback;
-    this.sprite = simpleSprite("images/level-tr.png");
-    // this.onMouseDown = function() {
-    //     console.log("mouse down");
-    // };
-    this.update = function() {
-
-    };
-    this.render = function(engine) {
-        engine.drawImage(this.sprite, this.x, this.y);
-    };
-};
-
-
-var RectangleEntity = function(x, y, w, h, color) {
-    this.x = x;
-    this.y = y;
-    this.w = w;
-    this.h = h;
-    this.color = color;
-    this.update = function(dt) {
-
-    };
-    this.render = function(engine) {
-        engine.drawRect(this.x, this.y, this.w, this.h, this.color);
-    };
-};
-
-
-var CoffeeMachine = function() {
+var ReelsBorder = function(x1, y, height, borderWidth) {
     this.components = [];
-    this.reel1 = new Reel(1, 0, 1, 4, 10, 0.99, -4);
-    this.reel2 = new Reel(2, 0, 1, 8, 15, 0.99, -8);
-    this.reel3 = new Reel(3, 0, 1, 6, 12, 0.99, -6);
-    this.components.push(this.reel1);
-    this.components.push(this.reel2);
-    this.components.push(this.reel3);
-    this.update = function(dt) {
-        for (var i in this.components) {
-            this.components[i].update(dt);
-        }
-        if (!this.reel1.spin) {
-            console.log("stop");
-        }
-    };
+    this.components.push(new RectangleEntity(x1 - borderWidth, y, borderWidth, height));
+    this.components.push(new RectangleEntity(x1 + height, y, borderWidth, height));
+    this.components.push(new RectangleEntity(x1 - borderWidth, y - borderWidth, height + 2 * borderWidth, borderWidth));
+    this.components.push(new RectangleEntity(x1 - borderWidth, y - borderWidth + height, height + 2 * borderWidth, borderWidth));
+
+    this.update = function() {};
     this.render = function(engine) {
         for (var i in this.components) {
             this.components[i].render(engine);
         }
     };
+
 };
 
-var Reel = function(x, y, speed, a, maxSpeed, brakeSpeed, a2, callback, im1, im2, im3) {
-    this.x = x;
-    this.y = y;
+var Reel = function(x, y, height, im1, im2, im3) {
+    Entity.call(this, x, y);
+    this.height = height;
+    this.borderWidth = 0.05;
     this.speed = 0;
-    this.maxSpeed = maxSpeed;
-    this.brakeSpeed = brakeSpeed;
-    this.minSpeed = 0.4;
+    this.maxSpeed;
+    this.acceleration;
+    this.minSpeed = 1;
     this.accelerate = true;
     this.brake = false;
     this.spin = false;
-    this.tStopping = -1;
-    this.h1 = -1;
-    this.onStop = callback;
+    this.tStopping = null;
+    this.hStopping = null;
+    this.onStop;
     this.dy;
-    this.height = 3;
-    this.topBorder = new RectangleEntity(this.x, this.y + this.height - 4, 1, 1, "black");
-    this.topBorderThin = new RectangleEntity(this.x - 0.05, this.y + this.height - 4 + 0.95, 1 + 0.1, 0.05, "#4d4d4d");
-    this.bottomBorder = new RectangleEntity(this.x, this.y + this.height, 1, 1, "black");
-    this.bottomBorderThin = new RectangleEntity(this.x - 0.05, this.y + this.height, 1 + 0.1, 0.05, "#4d4d4d");
-    this.leftBorder = new RectangleEntity(this.x - 0.05, this.y, 0.05, 3, "#4d4d4d");
-    this.rightBorder = new RectangleEntity(this.x + 1, this.y, 0.05, 3, "#4d4d4d");
+    this.setMaxSpeed = function(value) {
+        this.maxSpeed = value;
+    };
+    this.setAcceleration = function(value) {
+        this.acceleration = value;
+    };
+    this.setOnStopCallback = function(callback) {
+        this.onStop = callback;
+    };
+
+    this.leftBorder = new RectangleEntity(this.x - this.borderWidth, this.y, this.borderWidth, this.height);
     this.components = [];
-    this.components.push(new ReelIcon(this.x, this.y + this.height - 9, im1, 1));
-    this.components.push(new ReelIcon(this.x, this.y + this.height - 8, im2, 2));
-    this.components.push(new ReelIcon(this.x, this.y + this.height - 7, im3, 3));
-    this.components.push(new ReelIcon(this.x, this.y + this.height - 6, im1, 1));
-    this.components.push(new ReelIcon(this.x, this.y + this.height - 5, im2, 2));
-    this.components.push(new ReelIcon(this.x, this.y + this.height - 4, im3, 3));
-    this.components.push(new ReelIcon(this.x, this.y + this.height - 3, im1, 1));
-    this.components.push(new ReelIcon(this.x, this.y + this.height - 2, im2, 2));
-    this.components.push(new ReelIcon(this.x, this.y + this.height - 1, im3, 3));
 
-    this.components[8].prev = this.components[7];
-    this.components[7].prev = this.components[6];
-    this.components[6].prev = this.components[5];
-    this.components[5].prev = this.components[4];
-    this.components[4].prev = this.components[3];
-    this.components[3].prev = this.components[2];
-    this.components[2].prev = this.components[1];
-    this.components[1].prev = this.components[0];
-    this.components[0].prev = this.components[8];
+    // add 9 icons on te reel
+    for (var i = 9; i > 0; i--) {
+        if (i % 3 === 0) {
+            this.components.push(new ReelIcon(this.x, this.y + this.height - i, im1, 0));
+        } else if (i % 3 === 2) {
+            this.components.push(new ReelIcon(this.x, this.y + this.height - i, im2, 1));
+        } else if (i % 3 === 1) {
+            this.components.push(new ReelIcon(this.x, this.y + this.height - i, im3, 2));
+        }
+    }
 
-    this.components[0].next = this.components[1];
-    this.components[1].next = this.components[2];
-    this.components[2].next = this.components[3];
-    this.components[3].next = this.components[4];
-    this.components[4].next = this.components[5];
-    this.components[5].next = this.components[6];
-    this.components[6].next = this.components[7];
-    this.components[7].next = this.components[8];
-    this.components[8].next = this.components[0];
-
-
-
+    this.lastInd = this.components.length - 1;
+    
+    // add links to the previous entity in the reel 
+    for (var j = 0; j < 9; j++) {
+        this.components[j].prev = j > 0 ? this.components[j - 1] : this.components[this.lastInd];
+    }
 
     this.beginning = this.components[0];
-    this.end = this.components[this.components.length - 1];
-    this.getH = function() {
+    this.end = this.components[this.lastInd];
+
+    this.getHStopping = function() {
         var res;
         for (var i in this.components) {
             var c = this.components[i];
@@ -194,73 +153,50 @@ var Reel = function(x, y, speed, a, maxSpeed, brakeSpeed, a2, callback, im1, im2
         return res;
     };
     this.update = function(dt) {
-
         if (this.spin) {
             if (this.accelerate && this.speed < this.maxSpeed) {
-                // this.speed *= a;
-                this.speed += a * dt;
+                this.speed += this.acceleration * dt;
             } else if (this.accelerate && this.speed >= this.maxSpeed) {
                 this.accelerate = false;
                 this.brake = true;
             } else if (this.brake && this.speed >= this.minSpeed) {
-                this.speed += a2 * dt;
+                this.speed += this.acceleration * -1 * dt;
             } else if (this.brake && this.speed < this.minSpeed) {
-                if (this.tStopping === -1) {
+                if (this.tStopping === null) {
                     this.tStopping = 0;
-                    this.h1 = this.getH();
+                    this.hStopping = this.getHStopping();
                 } else {
                     this.tStopping += dt;
                 }
 
-                if (this.tStopping >= this.h1 / this.speed) {
+                if (this.tStopping >= this.hStopping / this.speed) {
                     this.spin = false;
-                    
                     this.speed = 0;
                     this.accelerate = true;
                     this.brake = false;
-                    this.tStopping = -1;
-                    this.h1 = -1;
-                    this.onStop(this.beginning.next.value);
+                    this.tStopping = null;
+                    this.hStopping = null;
+                    this.onStop(this.end.prev.value);
                 }
             }
-            
-            
-            this.dy = dt * this.speed;
-            for (var i in this.components) {
-                this.components[i].y += this.dy;
-            }
-            if (this.end.y > this.y + this.height) { //changed
-                this.end.y = this.beginning.y - 1;
-                this.beginning = this.end;
-                this.end = this.end.prev;
-            }
-        //     for (var i in this.components) {
-        // var c = this.components[i];
-        // if (c.y >= this.y - 1) {
-        //     c.visible = true;
-        // }
-        // }
-            
-        }
 
+            if (this.spin) {
+                this.dy = dt * this.speed;
+                for (var i in this.components) {
+                    this.components[i].y += this.dy;
+                }
+                if (this.end.y > this.y + this.height) {
+                    this.end.y = this.beginning.y - 1;
+                    this.beginning = this.end;
+                    this.end = this.end.prev;
+                }
+            }
+        }
     };
     this.render = function(engine) {
         for (var i in this.components) {
             this.components[i].render(engine);
         }
-        this.topBorder.render(engine);
-        this.topBorderThin.render(engine);
-        this.bottomBorder.render(engine);
-        this.bottomBorderThin.render(engine);
         this.leftBorder.render(engine);
-        this.rightBorder.render(engine);
-
     };
-
 };
-
-
-
-
-
-
