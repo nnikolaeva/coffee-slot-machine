@@ -1,4 +1,9 @@
 body {
+	background: beige;
     text-align: center;
     font-family: 'Gloria Hallelujah', "Times New Roman";
+}
+
+#try-again-message {
+	display: none;
 }

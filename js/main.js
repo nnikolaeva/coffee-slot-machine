@@ -60,6 +60,16 @@ window.onload = function() {
         engine.handleMouseEvent("click", event);
     });
 
+    var tryAgainMessage = document.getElementById("try-again-message");
+
+    var showTryAgainMessage = function() {
+        tryAgainMessage.style.display = "block";
+    };
+
+    var hideTryAgainMessage = function() {
+        tryAgainMessage.style.display = "none";
+    };
+
     var stopped = true;
 
     // display prize
@@ -78,11 +88,13 @@ window.onload = function() {
                 setTimeout(showPrize(values[0]), 0);
             } else {
                 stopped = true;
+                setTimeout(showTryAgainMessage(), 0);
             }
         }
     };
 
     var start = function() {
+        hideTryAgainMessage();
         if (stopped) {
             stopped = false;
 

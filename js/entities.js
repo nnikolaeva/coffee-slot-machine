@@ -121,7 +121,7 @@ var Reel = function(x, y, height, im1, im2, im3) {
     this.leftBorder = new RectangleEntity(this.x - this.borderWidth, this.y, this.borderWidth, this.height);
     this.components = [];
 
-    // add 9 icons on te reel
+    // add 9 icons to the reel
     for (var i = 9; i > 0; i--) {
         if (i % 3 === 0) {
             this.components.push(new ReelIcon(this.x, this.y + this.height - i, im1, 0));
